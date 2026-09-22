@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self 
 
 from pydantic import (
     AwareDatetime,
@@ -33,5 +33,18 @@ class TravelRequest(BaseModel):
     @model_validator(mode="after")
     def validate_date_order(self) -> Self:
         if self.return_date <= self.departure_date:
-            raise ValueError("A data de retorno deve ser posterior à partida.")
+            raise ValueError(
+                "A data de retorno deve ser posterior à partida."
+            )
         return self
+
+
+PolicyId = Literal["POL-001", "POL-002", "POL-003"]
+
+
+class LLMAssessment(BaseModel):
+    violated_policy_ids: list[PolicyId]
+
+class TravelDecision(BaseModel):
+    accepted: bool
+    violated_policies: list[str]
