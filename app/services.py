@@ -1,4 +1,5 @@
 import httpx
+import logging
 from google.genai import errors
 from pydantic import ValidationError
 
@@ -6,6 +7,7 @@ from app.llm import assess_with_llm
 from app.policy import check_policy
 from app.schemas import TravelDecision, TravelRequest
 
+logger = logging.getLogger(__name__)
 
 POLICY_MESSAGES = {
     "POL-001": "POL-001: Duração máxima de 15 dias excedida.",
@@ -30,6 +32,20 @@ def evaluate_trip(trip: TravelRequest) -> TravelDecision:
         RuntimeError,
         OSError,
     ) as exc:
+        logger.warning(
+            "Falha na avaliação: tipo=%s",
+            type(exc).__name__,
+        )
+
+        if isinstance(exc, errors.APIError):
+            logger.warning("Código da API externa: %s", exc.code)
+
+        if isinstance(exc, ValidationError):
+            logger.warning(
+                "Tipos de erro de validação: %s",
+                [error["type"] for error in exc.errors()],
+            )
+
         raise EvaluationUnavailableError(
             "Não foi possível concluir a avaliação. Tente novamente mais tarde."
         ) from exc
